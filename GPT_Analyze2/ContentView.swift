@@ -1,59 +1,131 @@
-//
-//  ContentView.swift
-//  GPT_Analyze2
-//
-//  Created by Stephen Thompson on 5/29/24.
-//
-
 import SwiftUI
-import SwiftData
+import AppKit
+import Foundation
+import NaturalLanguage
 
-struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+class Analyzer: ObservableObject {
+    @Published var statusText: String = "Select a file to start analysis"
+    @Published var isAnalyzing: Bool = false
 
-    var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+    func analyze(fileURL: URL) {
+        DispatchQueue.global(qos: .background).async {
+            do {
+                let startTime = Date()
+                DispatchQueue.main.async {
+                    self.statusText = "Starting analysis at: \(startTime)"
+                }
+
+                let data = try Data(contentsOf: fileURL)
+                guard let conversationsData = try JSONSerialization.jsonObject(with: data, options: []) as? [[String: Any]] else {
+                    DispatchQueue.main.async {
+                        self.statusText = "Invalid JSON format"
+                    }
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    self.statusText = "File loaded and JSON parsed successfully"
+                }
+
+                var messages: [String] = []
+                for conversation in conversationsData {
+                    if let mapping = conversation["mapping"] as? [String: [String: Any]] {
+                        for node in mapping.values {
+                            if let message = node["message"] as? [String: Any],
+                               let content = message["content"] as? [String: Any],
+                               let parts = content["parts"] as? [String] {
+                                messages.append(contentsOf: parts)
+                            }
+                        }
                     }
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-            .toolbar {
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
+
+                DispatchQueue.main.async {
+                    self.statusText = "Messages extracted successfully"
+                }
+
+                let textMessages = messages.filter { $0 is String }
+                let allText = textMessages.joined(separator: " ")
+
+                DispatchQueue.main.async {
+                    self.statusText = "Non-text messages filtered out"
+                }
+
+                let tokenizer = NLTokenizer(unit: .word)
+                tokenizer.string = allText
+                var words: [String] = []
+                tokenizer.enumerateTokens(in: allText.startIndex..<allText.endIndex) { tokenRange, _ in
+                    let word = String(allText[tokenRange]).lowercased()
+                    words.append(word)
+                    return true
+                }
+
+                DispatchQueue.main.async {
+                    self.statusText = "Text tokenized successfully"
+                }
+
+                let wordCounts = NSCountedSet(array: words)
+                let totalWords = wordCounts.count
+                let sortedWords = wordCounts.allObjects.compactMap { $0 as? String }.sorted { wordCounts.count(for: $0) > wordCounts.count(for: $1) }
+
+                DispatchQueue.main.async {
+                    self.statusText = "Word frequencies counted"
+                }
+
+                let sentimentAnalyzer = NLTagger(tagSchemes: [.sentimentScore])
+                sentimentAnalyzer.string = allText
+                let sentiment = sentimentAnalyzer.tag(at: allText.startIndex, unit: .paragraph, scheme: .sentimentScore).0?.rawValue ?? "0.0"
+                let overallSentiment = Double(sentiment) ?? 0.0
+
+                DispatchQueue.main.async {
+                    self.statusText = "Overall sentiment: \(overallSentiment)"
+                }
+
+                let homeDirectory = FileManager.default.homeDirectoryForCurrentUser
+                let resultsFileURL = homeDirectory.appendingPathComponent("analysis_results.txt")
+                let filteredResultsFileURL = homeDirectory.appendingPathComponent("analysis_results_without_stopwords.txt")
+
+                var resultsText = "Most common words:\n"
+                for word in sortedWords.prefix(100000) {
+                    let count = wordCounts.count(for: word)
+                    let percentage = (Double(count) / Double(totalWords)) * 100
+                    resultsText += "\(word): \(count) (\(String(format: "%.2f", percentage))%)\n"
+                }
+                resultsText += "\nOverall sentiment: \(overallSentiment)\n"
+                try resultsText.write(to: resultsFileURL, atomically: true, encoding: .utf8)
+
+                let stopWords: Set<String> = ["a", "an", "the", "and", "or", "but", "because", "as", "if", "when", "while", "of", "at", "by", "for", "with", "about", "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", "there", "all", "any", "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just", "don", "should", "now"]
+
+                let filteredWords = words.filter { !stopWords.contains($0) }
+
+                DispatchQueue.main.async {
+                    self.statusText = "Stop words filtered out"
+                }
+
+                let filteredWordCounts = NSCountedSet(array: filteredWords)
+                let filteredTotalWords = filteredWordCounts.count
+                let filteredSortedWords = filteredWordCounts.allObjects.compactMap { $0 as? String }.sorted { filteredWordCounts.count(for: $0) > filteredWordCounts.count(for: $1) }
+
+                var filteredResultsText = "Most common words (without stop words):\n"
+                for word in filteredSortedWords.prefix(100000) {
+                    let count = filteredWordCounts.count(for: word)
+                    let percentage = (Double(count) / Double(filteredTotalWords)) * 100
+                    filteredResultsText += "\(word): \(count) (\(String(format: "%.2f", percentage))%)\n"
+                }
+                try filteredResultsText.write(to: filteredResultsFileURL, atomically: true, encoding: .utf8)
+
+                let endTime = Date()
+                DispatchQueue.main.async {
+                    self.statusText = "Analysis completed at: \(endTime)\nTotal analysis time: \(endTime.timeIntervalSince(startTime)) seconds"
+                    self.isAnalyzing = false
+                }
+
+            } catch {
+                DispatchQueue.main.async {
+                    self.statusText = "Error loading or parsing file: \(error)"
+                    self.isAnalyzing = false
                 }
             }
-        } detail: {
-            Text("Select an item")
         }
     }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
-        }
-    }
-}
-
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
 }
