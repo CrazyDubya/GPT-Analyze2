@@ -6,6 +6,8 @@ import NaturalLanguage
 class Analyzer: ObservableObject {
     @Published var statusText: String = "Select a file to start analysis"
     @Published var isAnalyzing: Bool = false
+    
+    private static let stopWords: Set<String> = ["a", "an", "the", "and", "or", "but", "because", "as", "if", "when", "while", "of", "at", "by", "for", "with", "about", "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", "there", "all", "any", "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just", "don", "should", "now"]
 
     func analyze(fileURL: URL) {
         DispatchQueue.global(qos: .background).async {
@@ -44,11 +46,10 @@ class Analyzer: ObservableObject {
                     self.statusText = "Messages extracted successfully"
                 }
 
-                let textMessages = messages.filter { $0 is String }
-                let allText = textMessages.joined(separator: " ")
+                let allText = messages.joined(separator: " ")
 
                 DispatchQueue.main.async {
-                    self.statusText = "Non-text messages filtered out"
+                    self.statusText = "Messages processed for analysis"
                 }
 
                 let tokenizer = NLTokenizer(unit: .word)
@@ -85,18 +86,16 @@ class Analyzer: ObservableObject {
                 let resultsFileURL = homeDirectory.appendingPathComponent("analysis_results.txt")
                 let filteredResultsFileURL = homeDirectory.appendingPathComponent("analysis_results_without_stopwords.txt")
 
-                var resultsText = "Most common words:\n"
-                for word in sortedWords.prefix(100000) {
+                let resultsLines = ["Most common words:"]
+                let wordLines = sortedWords.prefix(100000).map { word in
                     let count = wordCounts.count(for: word)
                     let percentage = (Double(count) / Double(totalWords)) * 100
-                    resultsText += "\(word): \(count) (\(String(format: "%.2f", percentage))%)\n"
+                    return "\(word): \(count) (\(String(format: "%.2f", percentage))%)"
                 }
-                resultsText += "\nOverall sentiment: \(overallSentiment)\n"
+                let resultsText = (resultsLines + wordLines + ["\nOverall sentiment: \(overallSentiment)"]).joined(separator: "\n")
                 try resultsText.write(to: resultsFileURL, atomically: true, encoding: .utf8)
 
-                let stopWords: Set<String> = ["a", "an", "the", "and", "or", "but", "because", "as", "if", "when", "while", "of", "at", "by", "for", "with", "about", "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", "there", "all", "any", "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just", "don", "should", "now"]
-
-                let filteredWords = words.filter { !stopWords.contains($0) }
+                let filteredWords = words.filter { !Self.stopWords.contains($0) }
 
                 DispatchQueue.main.async {
                     self.statusText = "Stop words filtered out"
@@ -106,12 +105,13 @@ class Analyzer: ObservableObject {
                 let filteredTotalWords = filteredWordCounts.count
                 let filteredSortedWords = filteredWordCounts.allObjects.compactMap { $0 as? String }.sorted { filteredWordCounts.count(for: $0) > filteredWordCounts.count(for: $1) }
 
-                var filteredResultsText = "Most common words (without stop words):\n"
-                for word in filteredSortedWords.prefix(100000) {
+                let filteredResultsLines = ["Most common words (without stop words):"]
+                let filteredWordLines = filteredSortedWords.prefix(100000).map { word in
                     let count = filteredWordCounts.count(for: word)
                     let percentage = (Double(count) / Double(filteredTotalWords)) * 100
-                    filteredResultsText += "\(word): \(count) (\(String(format: "%.2f", percentage))%)\n"
+                    return "\(word): \(count) (\(String(format: "%.2f", percentage))%)"
                 }
+                let filteredResultsText = (filteredResultsLines + filteredWordLines).joined(separator: "\n")
                 try filteredResultsText.write(to: filteredResultsFileURL, atomically: true, encoding: .utf8)
 
                 let endTime = Date()
