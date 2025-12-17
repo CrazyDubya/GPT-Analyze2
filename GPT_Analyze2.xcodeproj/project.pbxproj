@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		7F2AA14C2C082C0E006286FD /* GPT_Analyze2App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2AA14B2C082C0E006286FD /* GPT_Analyze2App.swift */; };
 		7F2AA14E2C082C0E006286FD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2AA14D2C082C0E006286FD /* ContentView.swift */; };
-		7F2AA1502C082C0E006286FD /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2AA14F2C082C0E006286FD /* Item.swift */; };
 		7F2AA1522C082C0F006286FD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7F2AA1512C082C0F006286FD /* Assets.xcassets */; };
 		7F2AA1552C082C0F006286FD /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7F2AA1542C082C0F006286FD /* Preview Assets.xcassets */; };
 		7F2AA1602C082C0F006286FD /* GPT_Analyze2Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2AA15F2C082C0F006286FD /* GPT_Analyze2Tests.swift */; };
@@ -38,7 +37,6 @@
 		7F2AA1482C082C0E006286FD /* GPT_Analyze2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GPT_Analyze2.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7F2AA14B2C082C0E006286FD /* GPT_Analyze2App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPT_Analyze2App.swift; sourceTree = "<group>"; };
 		7F2AA14D2C082C0E006286FD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		7F2AA14F2C082C0E006286FD /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
 		7F2AA1512C082C0F006286FD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7F2AA1542C082C0F006286FD /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		7F2AA1562C082C0F006286FD /* GPT_Analyze2.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GPT_Analyze2.entitlements; sourceTree = "<group>"; };
@@ -99,7 +97,6 @@
 			children = (
 				7F2AA14B2C082C0E006286FD /* GPT_Analyze2App.swift */,
 				7F2AA14D2C082C0E006286FD /* ContentView.swift */,
-				7F2AA14F2C082C0E006286FD /* Item.swift */,
 				7F2AA1512C082C0F006286FD /* Assets.xcassets */,
 				7F2AA1562C082C0F006286FD /* GPT_Analyze2.entitlements */,
 				7F2AA1532C082C0F006286FD /* Preview Content */,
@@ -263,7 +260,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				7F2AA14E2C082C0E006286FD /* ContentView.swift in Sources */,
-				7F2AA1502C082C0E006286FD /* Item.swift in Sources */,
 				7F2AA14C2C082C0E006286FD /* GPT_Analyze2App.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
