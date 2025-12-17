@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 @main
 struct GPT_Analyze2App: App {
@@ -14,5 +13,6 @@ struct GPT_Analyze2App: App {
         WindowGroup {
             ContentView()
         }
+        .windowResizability(.contentMinSize)
     }
 }
